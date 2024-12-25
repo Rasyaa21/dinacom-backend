@@ -13,10 +13,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_image')->default(asset('placeholder_image.png'));
+            $table->integer('points')->default(0);
+            $table->integer('level')->default(1);
+            $table->enum('rank', ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'])->default('Bronze');
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
