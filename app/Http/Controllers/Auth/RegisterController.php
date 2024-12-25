@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Request\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserInterface;
+use App\Response\ApiResponse;
+use Exception;
 use Illuminate\Http\Request;
 
 class RegisterController extends Controller
@@ -15,7 +19,22 @@ class RegisterController extends Controller
         $this->userRepository = $userRepository;
     }
 
-    public function register(){
+    public function register(RegisterRequest $req){
+        try{
+            $data = $req->validated();
+            $user = $this->userRepository->register($data);
+            $token = $user->createToken('token')->plainTextToken;
+            return new ApiResponse(201, [new UserResource($user), 'token' => $token]);
+        } catch (Exception $e){
+            return new ApiResponse(500, [], 'server error', $e->getMessage());
+        }
+    }
 
+    public function login(){
+        try{
+
+        } catch (Exception $e){
+            return new ApiResponse(500, [], 'server error', $e->getMessage());
+        }
     }
 }
