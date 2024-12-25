@@ -4,11 +4,11 @@ namespace App\Repositories;
 
 use App\Repositories\Contracts\UserInterface;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
 class UserRepository implements UserInterface
 {
-    // Implement the methods from the interface
     public function all()
     {
         return User::all();
@@ -19,7 +19,7 @@ class UserRepository implements UserInterface
         return User::where('id', $id);
     }
 
-    public function create(array $data)
+    public function register(array $data)
     {
         $user = User::create([
             'name' => $data['name'],
@@ -30,13 +30,26 @@ class UserRepository implements UserInterface
         return $user;
     }
 
-    public function update($id, array $data)
+    public function login(array $data)
     {
-        // Logic for updating an item
+        if (!Auth::attempt(['email' => $data['email'], 'password' => $data['password']])){
+            return false;
+        };
+        return Auth::user();
+    }
+
+    public function updateProfile($id, array $data)
+    {
+        $user = User::find($id);
+        return $user->update([
+            'name' => $data['name'],
+            'password' => Hash::make($data['password']),
+            'profile_image' => $data['profile_image']
+        ]);
     }
 
     public function delete($id)
     {
-        // Logic for deleting an item
+        return User::find($id)->delete();
     }
 }
