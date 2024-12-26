@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -25,7 +26,8 @@ class User extends Authenticatable
         'profile_image',
         'points',
         'level',
-        'rank'
+        'rank',
+        'uuid'
     ];
 
     /**
@@ -48,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'uuid' => 'string'
         ];
     }
 
@@ -68,6 +71,10 @@ class User extends Authenticatable
     public static function booted(){
         static::saving(function ($user){
             $user->rank = $user->calculateRank();
+        });
+
+        static::creating(function($user){
+            $user->uuid = Str::uuid()->toString();
         });
     }
 }

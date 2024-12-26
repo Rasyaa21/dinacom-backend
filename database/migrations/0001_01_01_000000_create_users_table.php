@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('profile_image')->default(asset('placeholder_image.png'));
+            $table->string('profile_image')->default('placeholder_image.png');
             $table->integer('points')->default(0);
             $table->integer('level')->default(1);
             $table->enum('rank', ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'])->default('Bronze');

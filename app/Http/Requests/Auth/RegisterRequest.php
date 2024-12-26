@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Http\Requests\Request;
+namespace App\Http\Requests\Auth;
 
 use App\Response\ApiResponse;
-use Dotenv\Validator;
 use Illuminate\Contracts\Validation\Validator as ValidationValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -13,7 +12,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:users,name',
+            'name' => 'required|string|max:255|unique:users,name|regex:/^\S*$/',
             'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
         ];
@@ -24,6 +23,7 @@ class RegisterRequest extends FormRequest
         return [
             'name.required' => 'Kolom nama wajib diisi.',
             'name.string' => 'Nama harus berupa teks yang valid.',
+            'name.regex' => 'Nama tidak boleh mengandung spasi.',
             'name.max' => 'Nama tidak boleh lebih dari 255 karakter.',
 
             'email.required' => 'Kolom email wajib diisi.',
