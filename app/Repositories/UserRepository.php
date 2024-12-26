@@ -38,14 +38,17 @@ class UserRepository implements UserInterface
         return Auth::user();
     }
 
-    public function updateProfile($id, array $data)
+    public function update($id, array $data)
     {
         $user = User::find($id);
-        return $user->update([
-            'name' => $data['name'],
-            'password' => Hash::make($data['password']),
-            'profile_image' => $data['profile_image']
-        ]);
+        $updateData = [
+            'name' => $data['name'] ?? $user->name,
+            'password' => isset($data['password']) ? Hash::make($data['password']) : $user->password,
+        ];
+        if (isset($data['profile_image'])) {
+            $updateData['profile_image'] = $data['profile_image'];
+        }
+        return $user->update($updateData);
     }
 
     public function delete($id)

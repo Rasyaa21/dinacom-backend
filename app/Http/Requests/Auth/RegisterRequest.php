@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Response\ApiResponse;
+use App\Http\Response\ApiResponse;
 use Illuminate\Contracts\Validation\Validator as ValidationValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -14,7 +14,7 @@ class RegisterRequest extends FormRequest
         return [
             'name' => 'required|string|max:255|unique:users,name|regex:/^\S*$/',
             'email' => 'required|string|email|unique:users,email',
-            'password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
+            'password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/',
         ];
     }
 

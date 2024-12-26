@@ -20,7 +20,10 @@ class UserResource extends JsonResource
             'profile_image' => $this->profile_image,
             'points' => $this->points,
             'level' => $this->level,
-            'rank' => $this->rank
+            'rank' => $this->rank,
+            'uuid' => $this->uuid
         ];
     }
+
+    public static $wrap = 'user';
 }

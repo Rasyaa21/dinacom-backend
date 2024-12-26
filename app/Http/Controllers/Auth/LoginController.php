@@ -7,7 +7,8 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserInterface;
-use App\Response\ApiResponse;
+use Illuminate\Support\Facades\Log;
+use App\Http\Response\ApiResponse;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -26,9 +27,9 @@ class LoginController extends Controller
             $data = $req->validated();
             $user = $this->userRepository->login($data);
             $token = $user->createToken('token')->plainTextToken;
-            return new ApiResponse(201, [new UserResource($user), 'token' => $token]);
+            return new ApiResponse(201, ['user' => new UserResource($user), 'token' => $token]);
         } catch (Exception $e){
-            return new ApiResponse(500, [], 'server error', $e->getMessage());
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
         }
     }
 
@@ -37,7 +38,7 @@ class LoginController extends Controller
             $users = $this->userRepository->all();
             return new ApiResponse(200, [UserResource::collection($users)]);
         } catch (Exception $e){
-            return new ApiResponse(500, [], 'error while fetching all the user data', $e->getMessage());
+            return new ApiResponse(500, [$e->getMessage()], 'error while fetching all the user data');
         }
     }
 
@@ -46,19 +47,26 @@ class LoginController extends Controller
             $user = User::where('uuid', $uuid);
             return new ApiResponse(200, [new UserResource($user)]);
         } catch (Exception $e){
-            return new ApiResponse(500, [], 'error while finding user', $e->getMessage());
+            return new ApiResponse(500, [$e->getMessage()], 'error while finding user');
         }
     }
 
-    public function updateProfile(UpdateUserRequest $req){
-        try{
+    public function updateProfile(UpdateUserRequest $req)
+    {
+        try {
             $data = $req->validated();
-            $userId = Auth::id();
-            $this->userRepository->updateProfile($userId, $data);
-        } catch (Exception $e){
-            return new ApiResponse(500, [], 'error while updatig user profile', $e->getMessage());
+            $user = Auth::user();
+            Log::info('Authenticated User:', ['user' => $user]);
+            if (!$user) {
+                return new ApiResponse(401, [], 'User not authenticated');
+            }
+            $this->userRepository->update($user->id, $data);
+            return new ApiResponse(201, ['message' => 'Profile updated successfully']);
+        } catch (Exception $e) {
+            return new ApiResponse(500, [$e->getMessage()], 'Error while updating profile');
         }
     }
+
 
     public function logout(Request $req){
         try{
@@ -67,7 +75,7 @@ class LoginController extends Controller
             });
             new ApiResponse(200, [], 'successfully logged out.');
         } catch (Exception $e){
-            return new ApiResponse(500, [], 'Error logging out: ' . $e->getMessage());
+            return new ApiResponse(500, [$e->getMessage()], 'Error logging out: ' . $e->getMessage());
         }
     }
 }

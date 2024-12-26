@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Repositories\Contracts\UserInterface;
-use App\Response\ApiResponse;
+use App\Http\Response\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,8 @@ class RegisterController extends Controller
 
     private UserInterface $userRepository;
 
-    public function __construct(UserInterface $userRepository) {
+    public function __construct(UserInterface $userRepository)
+    {
         $this->userRepository = $userRepository;
     }
 
@@ -24,9 +25,9 @@ class RegisterController extends Controller
             $data = $req->validated();
             $user = $this->userRepository->register($data);
             $token = $user->createToken('token')->plainTextToken;
-            return new ApiResponse(201, [new UserResource($user), 'token' => $token]);
+            return new ApiResponse(201, ['user' => new UserResource($user), 'token' => $token]);
         } catch (Exception $e){
-            return new ApiResponse(500, [], 'server error', $e->getMessage());
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
         }
     }
 }
