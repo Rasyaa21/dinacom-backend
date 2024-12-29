@@ -44,7 +44,7 @@ class LoginController extends Controller
 
     public function findUser($uuid){
         try{
-            $user = User::where('uuid', $uuid);
+            $user = User::where('uuid', $uuid)->first();
             return new ApiResponse(200, [new UserResource($user)]);
         } catch (Exception $e){
             return new ApiResponse(500, [$e->getMessage()], 'error while finding user');

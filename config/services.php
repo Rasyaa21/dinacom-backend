@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'google' => [
+        'credentials' => base_path(env('GOOGLE_APPLICATION_CREDENTIALS', 'public/storage/private_api/private-key-api.json')),
+        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID', 'your-google-project-id'),
+    ],
+
 ];
