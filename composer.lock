@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5690e2ca284eaaed1948d7c595af2f90",
+    "content-hash": "198550247ebc75571ca83e4f37a6f8a1",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -1692,16 +1692,16 @@
         },
         {
             "name": "google-gemini-php/client",
-            "version": "1.0.14",
+            "version": "1.0.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/google-gemini-php/client.git",
-                "reference": "11e7413b231dd2ab7ca6169f780d6cc4eeae41a1"
+                "reference": "6dca9a5e6a6de39b230fe4593a8d041efd02e34e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google-gemini-php/client/zipball/11e7413b231dd2ab7ca6169f780d6cc4eeae41a1",
-                "reference": "11e7413b231dd2ab7ca6169f780d6cc4eeae41a1",
+                "url": "https://api.github.com/repos/google-gemini-php/client/zipball/6dca9a5e6a6de39b230fe4593a8d041efd02e34e",
+                "reference": "6dca9a5e6a6de39b230fe4593a8d041efd02e34e",
                 "shasum": ""
             },
             "require": {
@@ -1749,9 +1749,9 @@
             ],
             "support": {
                 "issues": "https://github.com/google-gemini-php/client/issues",
-                "source": "https://github.com/google-gemini-php/client/tree/1.0.14"
+                "source": "https://github.com/google-gemini-php/client/tree/1.0.15"
             },
-            "time": "2024-11-06T17:51:13+00:00"
+            "time": "2024-12-29T12:53:49+00:00"
         },
         {
             "name": "google-gemini-php/laravel",
@@ -11364,12 +11364,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

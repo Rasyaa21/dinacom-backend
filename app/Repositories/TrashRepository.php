@@ -4,21 +4,15 @@ namespace App\Repositories;
 
 use App\Repositories\Contracts\TrashInterface;
 use Gemini\Data\Blob;
-use LucianoTonet\GroqLaravel\Facades\Groq;
-use Gemini\Enums\MimeType as EnumsMimeType;
+use Gemini\Enums\MimeType;
 use GeminiAPI\Laravel\Facades\Gemini;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Google\Cloud\Vision\V1\Client\ImageAnnotatorClient;
-use Google\Cloud\Vision\V1\Feature\Type;
-use Google\Cloud\Storage\StorageClient;
 use InvalidArgumentException;
 use RuntimeException;
 
 class TrashRepository implements TrashInterface
 {
-    private const FALLBACK_MODEL = 'gemini-1.5-flash';
-    // Implement the methods from the interface
     public function all()
     {
         // Logic for getting all items
@@ -46,29 +40,59 @@ class TrashRepository implements TrashInterface
 
     public function scanImage(string $imagePath)
     {
+        global $parsedResult;
         if (!file_exists($imagePath) || !is_file($imagePath) || !is_readable($imagePath)) {
             throw new InvalidArgumentException("Image file not found or not readable: $imagePath");
         }
 
-        var_dump(gettype($imagePath));
         try {
-            $prompt = 'Klasifikasikan saya sampah apa yang ada di gambar: organik atau anorganik. ' .
-                    'Berikan saya nama sampahnya dan rekomendasi cara mengelola sampah tersebut.';
-            $response = Groq::vision()->analyze($imagePath, $prompt);
-            $imageAnalysis = $response['choices'][0]['message']['content'];
+            $prompt = '"Anda adalah seorang pemilah sampah profesional. Berdasarkan gambar, identifikasi:
 
-            return $response;
+                        Nama jenis sampah.
+                        Kategori sampah (Organik, Anorganik, atau Limbah).
+                        Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
+                        Harap jawab dalam format berikut:
+
+                        Nama Sampah: [nama]
+                        Kategori: [Organik/Anorganik/Limbah]
+                        Pengelolaan (jika Limbah): [penjelasan]
+
+                        "';
+            $result = Gemini::geminiFlash()
+                ->generateContent([
+                    $prompt,
+                    new Blob(
+                        mimeType: MimeType::IMAGE_JPEG,
+                        data: base64_encode(file_get_contents($imagePath))
+                    )
+                ]);
+
+                $output = $result->text();
+
+                preg_match('/Nama Sampah: (.+)/', $output, $namaSampah);
+                preg_match('/Kategori: (.+)/', $output, $kategori);
+                preg_match('/Pengelolaan \(jika Limbah\): (.+)/s', $output, $pengelolaan);
+
+                $parsedResult = [
+                    'nama_sampah' => $namaSampah[1] ?? null,
+                    'kategori' => $kategori[1] ?? null,
+                    'pengelolaan' => $pengelolaan[1] ?? null,
+                ];
+                return $parsedResult;
 
         } catch (Exception $e) {
-            Log::error('Groq API Error', [
+            Log::error('Gemini API Error', [
                 'error' => $e->getMessage(),
                 'file' => $imagePath,
                 'trace' => $e->getTraceAsString()
             ]);
-
-            throw new RuntimeException("Failed to process image with Groq API: " . $e->getMessage());
+            throw new RuntimeException("Failed to process image with Gemini API: " . $e->getMessage());
         }
     }
+
+    public function storeData($data){
+
+    }
+
+
 }
-
-
