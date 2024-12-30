@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ScanImageRequest;
+use App\Http\Resources\TrashResource;
 use App\Http\Response\ApiResponse;
 use App\Repositories\Contracts\TrashInterface;
 use App\Repositories\TrashRepository;
@@ -67,9 +68,10 @@ class TrashController extends Controller
     public function getGroupData(string $type){
         try{
             $data = $this->trashRepository->getGroupDataByUserId($type);
-            return new ApiResponse(200, [$data], "success");
+            return new ApiResponse(200, TrashResource::collection($data), "success");
         } catch (Exception $e){
             return new ApiResponse(500, [$e->getMessage()], 'server error');
         }
     }
+
 }

@@ -154,21 +154,22 @@ class TrashRepository implements TrashInterface
 
         $quantity = $data['trash_quantity'];
         $points = 5 * $quantity;
-
+        $exp = 25 * $quantity;
         $user = User::find($user->id);
-        if ($user->rank == 'Bronze'){
-            $user->points += $points * 1.1;
-        } else if($user->rank == 'Silver') {
-            $user->points += $points * 1.3;
-        } else if ($user->rank == 'Gold'){
-            $user->points += $points * 1.5;
-        } else if ($user->rank == 'Platinum'){
-            $user->points += $points * 1.7;
-        } else {
-            $user->points += $points * 2;
-        }
-        $user->save();
+        $rank = $user->rank;
 
+        $rankMultiplier = [
+            'Bronze' => 1,
+            'Silver' => 1.2,
+            'Gold' => 1.4,
+            'Platinum' => 1.5,
+            'Diamond' => 1.7
+        ];
+
+        $multiplier = isset($rankMultiplier[$rank]) ? $rankMultiplier[$rank] : 1;
+        $user->exp += $exp * $multiplier;
+        $user->points += $points * $multiplier;
+        $user->save();
 
         return $trashData;
     }

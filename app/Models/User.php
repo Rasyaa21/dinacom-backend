@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
+use App\Repositories\UserRepository;
 
 class User extends Authenticatable
 {
@@ -55,22 +56,39 @@ class User extends Authenticatable
     }
 
     public function calculateRank(){
-        if($this->points < 500){
+        if($this->exp < 5000){
             return 'Bronze';
-        } elseif ($this->points < 1000){
+        } elseif ($this->exp < 10000){
             return 'Silver';
-        } elseif ($this->points < 1500){
+        } elseif ($this->exp < 15000){
             return 'Gold';
-        } elseif ($this->points < 2000){
+        } elseif ($this->exp < 20000){
             return 'Platinum';
         } else {
             return 'Diamond';
         }
     }
 
+    public function calculateLeaderboard(){
+        //if
+        $higherRankUsers = User::where('exp' ,'>' ,$this->exp)
+            ->orWhere(function ($query){
+                //else
+                $query->where('exp', '=', $this->exp)
+                //incase the users has a same exp
+                    ->where('id', '<' , $this->id);
+            })
+            ->count();
+        return $higherRankUsers + 1;
+    }
+
     public static function booted(){
         static::saving(function ($user){
             $user->rank = $user->calculateRank();
+        });
+
+        static::saving(function ($user){
+            $user->leaderboard = $user->calculateLeaderboard();
         });
 
         static::creating(function($user){

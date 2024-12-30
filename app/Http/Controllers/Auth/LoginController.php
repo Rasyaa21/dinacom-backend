@@ -33,9 +33,9 @@ class LoginController extends Controller
         }
     }
 
-    public function getAllData(){
+    public function leaderboard(){
         try{
-            $users = $this->userRepository->all();
+            $users = $this->userRepository->leaderboard();
             return new ApiResponse(200, [UserResource::collection($users)]);
         } catch (Exception $e){
             return new ApiResponse(500, [$e->getMessage()], 'error while fetching all the user data');

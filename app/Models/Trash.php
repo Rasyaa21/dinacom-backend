@@ -24,11 +24,6 @@ class Trash extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the category that owns the Trash
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
     public function category()
     {
         return $this->belongsTo(TrashCategory::class);

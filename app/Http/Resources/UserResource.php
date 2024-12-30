@@ -21,7 +21,8 @@ class UserResource extends JsonResource
             'points' => $this->points,
             'level' => $this->level,
             'rank' => $this->rank,
-            'uuid' => $this->uuid
+            'uuid' => $this->uuid,
+            'exp' => $this->exp
         ];
     }
 

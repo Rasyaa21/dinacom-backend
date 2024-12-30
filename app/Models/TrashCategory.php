@@ -11,13 +11,13 @@ class TrashCategory extends Model
         'description'
     ];
 
-    /**
-     * Get all of the trashes for the TrashCategory
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
     public function trashes()
     {
         return $this->hasMany(Trash::class);
+    }
+
+    public function locations()
+    {
+        return $this->hasMany(TrashLocation::class);
     }
 }

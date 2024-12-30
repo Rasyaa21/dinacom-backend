@@ -4,7 +4,7 @@ namespace App\Repositories\Contracts;
 
 interface UserInterface
 {
-    public function all();
+    public function leaderboard();
     public function find($id);
     public function register(array $data);
     public function login(array $data);

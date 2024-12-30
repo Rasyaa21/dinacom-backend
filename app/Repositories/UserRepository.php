@@ -9,9 +9,11 @@ use App\Models\User;
 
 class UserRepository implements UserInterface
 {
-    public function all()
+    public function leaderboard()
     {
-        return User::all();
+        $users = User::all();
+        $sorted = $users->sortByDesc('exp');
+        return $sorted;
     }
 
     public function find($id)

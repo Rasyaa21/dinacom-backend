@@ -23,6 +23,7 @@ Route::prefix('/v1')->group(function () {
         Route::post('/logout', [LoginController::class, 'logout']);
         Route::post('/scan-image', [TrashController::class, 'scanImage']);
         Route::get('/get-trash/{type}', [TrashController::class, 'getGroupData']);
+        Route::get('/leaderboard', [LoginController::class, 'leaderboard']);
     });
 });
 
