@@ -45,8 +45,9 @@ class TrashController extends Controller
             $result = $this->trashRepository->scanImage($fullPath);
 
             @unlink($fullPath);
+            $storeData = $this->trashRepository->storeData($result);
 
-            return new ApiResponse(201, $result);
+            return new ApiResponse(201, $result, 'data berhasil di tambahkan');
 
         } catch (Exception $e) {
             Log::error('Image Classification Error', [
@@ -60,6 +61,15 @@ class TrashController extends Controller
                 'error' => $e->getMessage(),
                 'help' => 'Ensure you are using form-data with a valid image file in the trash_image field'
             ], 'Error processing image');
+        }
+    }
+
+    public function getGroupData(string $type){
+        try{
+            $data = $this->trashRepository->getGroupDataByUserId($type);
+            return new ApiResponse(200, [$data], "success");
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
         }
     }
 }

@@ -5,10 +5,9 @@ namespace App\Repositories\Contracts;
 interface TrashInterface
 {
     public function scanImage(string $imagePath);
-    public function storeData($data);
-    public function all();
-    public function find($id);
-    public function create(array $data);
-    public function update($id, array $data);
+    public function storeData(array $data);
     public function delete($id);
+    public function getDataByUserAndCategory($category_id);
+    public function getAllDataByUserId();
+    public function getGroupDataByUserId(string $type);
 }

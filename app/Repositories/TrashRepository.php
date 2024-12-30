@@ -7,35 +7,71 @@ use Gemini\Data\Blob;
 use Gemini\Enums\MimeType;
 use GeminiAPI\Laravel\Facades\Gemini;
 use Exception;
+use App\Models\Trash;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use RuntimeException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TrashRepository implements TrashInterface
 {
-    public function all()
-    {
-        // Logic for getting all items
+    public function getDataByUserAndCategory($category_id){
+        $userId = Auth::user()->id;
+        return Trash::where('user_id', $userId)->where('trash_category_id', $category_id)->get();
     }
 
-    public function find($id)
-    {
-        // Logic for finding a single item
+    public function getAllDataByUserId(){
+        $userId = Auth::user()->id;
+        return Trash::where('user_id', $userId)->get();
     }
 
-    public function create(array $data)
+    public function getGroupDataByUserId(string $type)
     {
-        // Logic for creating a new item
-    }
-
-    public function update($id, array $data)
-    {
-        // Logic for updating an item
-    }
-
-    public function delete($id)
-    {
-        // Logic for deleting an item
+        $user_id = Auth::user()->id;
+        if (!in_array($type, ['month', 'week', 'day'])) {
+            throw new InvalidArgumentException("Wrong Input Type");
+        }
+        $query = Trash::query()->where('user_id', $user_id);
+        if ($type == 'month') {
+            $groupData = $query->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as period, COUNT(*) as count')
+                ->groupBy('period')
+                ->get();
+            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
+                foreach($groupData as $group){
+                    if ($group->count > 1){
+                        $subQuery->orWhere(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'), $group->period);
+                    }
+                }
+            })->get();
+        } elseif ($type == 'week') {
+            $groupData = $query->selectRaw('YEAR(created_at) as year, WEEK(created_at) as week, COUNT(*) as count')
+                ->groupBy('year', 'week')
+                ->get();
+            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
+                foreach($groupData as $group){
+                    if ($group->count > 1){
+                        $subQuery->orWhere(function ($q) use ($group){
+                            $q->whereYear('created_at', $group->year)
+                            ->where(DB::raw('WEEK(created_at)'), $group->week);
+                        });
+                    }
+                }
+            })->get();
+        } else {
+            $groupData = $query->selectRaw('DATE(created_at) as period, COUNT(*) as count')
+                ->groupBy('period')
+                ->get();
+            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
+                foreach($groupData as $group){
+                    if($group->count > 1){
+                        $subQuery->orWhere(DB::raw('DATE(created_at)'), $group->period);
+                    }
+                }
+            })->get();
+        }
+        return $data;
     }
 
     public function scanImage(string $imagePath)
@@ -44,40 +80,47 @@ class TrashRepository implements TrashInterface
         if (!file_exists($imagePath) || !is_file($imagePath) || !is_readable($imagePath)) {
             throw new InvalidArgumentException("Image file not found or not readable: $imagePath");
         }
-
         try {
             $prompt = '"Anda adalah seorang pemilah sampah profesional. Berdasarkan gambar, identifikasi:
+                Nama jenis sampah.
+                Kategori sampah (Organik, Anorganik, atau Limbah).
+                Dan Ada Berapa Jumlah Sampahnya pada gambar tersebut.
+                Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
+                Harap jawab dalam format berikut:
 
-                        Nama jenis sampah.
-                        Kategori sampah (Organik, Anorganik, atau Limbah).
-                        Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
-                        Harap jawab dalam format berikut:
+                Nama Sampah: [nama]
+                Deskripsi : [deskripsi]
+                Kategori: [Organik/Anorganik/Limbah]
+                Pengelolaan : [penjelasan]
+                Jumlah Sampah: [jumlah]
+                "';
 
-                        Nama Sampah: [nama]
-                        Kategori: [Organik/Anorganik/Limbah]
-                        Pengelolaan (jika Limbah): [penjelasan]
-
-                        "';
             $result = Gemini::geminiFlash()
-                ->generateContent([
-                    $prompt,
-                    new Blob(
-                        mimeType: MimeType::IMAGE_JPEG,
-                        data: base64_encode(file_get_contents($imagePath))
-                    )
-                ]);
+            ->generateContent([
+            $prompt,
+            new Blob(
+                mimeType: MimeType::IMAGE_JPEG,
+                data: base64_encode(file_get_contents($imagePath))
+            )
+            ]);
 
-                $output = $result->text();
+            $output = $result->text();
 
-                preg_match('/Nama Sampah: (.+)/', $output, $namaSampah);
-                preg_match('/Kategori: (.+)/', $output, $kategori);
-                preg_match('/Pengelolaan \(jika Limbah\): (.+)/s', $output, $pengelolaan);
+            preg_match('/Nama Sampah: (.+)/', $output, $namaSampah);
+            preg_match('/Deskripsi : (.+)/', $output, $deskripsi);
+            preg_match('/Kategori: (.+)/', $output, $kategori);
+            preg_match('/Pengelolaan : (.+)/s', $output, $pengelolaan);
+            preg_match('/Jumlah Sampah: (\d+)/', $output, $jumlahSampah);
 
-                $parsedResult = [
-                    'nama_sampah' => $namaSampah[1] ?? null,
-                    'kategori' => $kategori[1] ?? null,
-                    'pengelolaan' => $pengelolaan[1] ?? null,
-                ];
+            $parsedResult = [
+            'trash_image' => $imagePath,
+            'trash_name' => $namaSampah[1] ?? null,
+            'description' => $deskripsi[1] ?? null,
+            'category' => $kategori[1] ?? null,
+            'pengelolaan' => $pengelolaan[1] ?? null,
+            'trash_quantity' => $jumlahSampah[1] ?? null,
+            ];
+
                 return $parsedResult;
 
         } catch (Exception $e) {
@@ -90,9 +133,47 @@ class TrashRepository implements TrashInterface
         }
     }
 
-    public function storeData($data){
+    public function storeData(array $data){
 
+        $user = Auth::user();
+        $trash_category_id = null;
+        if($data['category'] == 'Anorganik'){
+            $trash_category_id = 2;
+        } else if ($data['category'] == 'Organik'){
+            $trash_category_id = 1;
+        } else {
+            $trash_category_id = 3;
+        }
+        $trashData = Trash::create([
+            'trash_image' => $data['trash_image'],
+            'trash_name' => $data['trash_name'],
+            'description' => $data['description'],
+            'user_id' => $user->id,
+            'trash_category_id' => $trash_category_id
+        ]);
+
+        $quantity = $data['trash_quantity'];
+        $points = 5 * $quantity;
+
+        $user = User::find($user->id);
+        if ($user->rank == 'Bronze'){
+            $user->points += $points * 1.1;
+        } else if($user->rank == 'Silver') {
+            $user->points += $points * 1.3;
+        } else if ($user->rank == 'Gold'){
+            $user->points += $points * 1.5;
+        } else if ($user->rank == 'Platinum'){
+            $user->points += $points * 1.7;
+        } else {
+            $user->points += $points * 2;
+        }
+        $user->save();
+
+
+        return $trashData;
     }
 
-
+    public function delete($id){
+        return Trash::where('id', $id)->delete();
+    }
 }
