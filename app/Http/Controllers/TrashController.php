@@ -74,4 +74,30 @@ class TrashController extends Controller
         }
     }
 
+    public function getDataByUserAndCategory($category_id){
+        try{
+            $data = $this->trashRepository->getDataByUserAndCategory($category_id);
+            return new ApiResponse(200, TrashResource::collection($data), "success");
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
+
+    public function getAllDataByUserId(){
+        try{
+            $data = $this->trashRepository->getAllDataByUserId();
+            return new ApiResponse(200, TrashResource::collection($data), "success");
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
+
+    public function getTrashDetail($id){
+        try{
+            $data = $this->trashRepository->DetailTrash($id);
+            return new ApiResponse(200, new TrashResource($data), "success");
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
 }

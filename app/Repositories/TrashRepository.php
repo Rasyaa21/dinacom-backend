@@ -177,4 +177,9 @@ class TrashRepository implements TrashInterface
     public function delete($id){
         return Trash::where('id', $id)->delete();
     }
+
+    public function DetailTrash($id){
+        $user = Auth::user();
+        return Trash::where('id', $id)->where('user_id', $user->id)->first();
+    }
 }

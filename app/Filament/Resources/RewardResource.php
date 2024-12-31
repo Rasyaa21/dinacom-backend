@@ -2,16 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Imports\RewardCodesImporter;
 use App\Filament\Resources\RewardResource\Pages;
-use App\Filament\Resources\RewardResource\RelationManagers;
 use App\Models\Reward;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class RewardResource extends Resource
 {
@@ -25,8 +23,29 @@ class RewardResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('reward_name')
                     ->required(),
-                Forms\Components\TextInput::make('code')
+                Forms\Components\TextInput::make('points_required')
                     ->required(),
+                Forms\Components\FileUpload::make('reward_image')
+                    ->required()
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('stock')
+                    ->required()
+                    ->default(0)
+                    ->readOnly(),
+                Forms\Components\RichEditor::make('description')
+                    ->columnSpanFull()
+                    ->required(),
+                Forms\Components\Repeater::make('codes')
+                    ->relationship('codes')
+                    ->schema([
+                        Forms\Components\TextInput::make('code')
+                            ->required()
+                    ])
+                    ->columnSpanFull()
+                    ->required()
+                    ->afterStateUpdated(function ($state, callable $set){
+                        $set('stock', count($state));
+                    })
             ]);
     }
 
@@ -34,10 +53,18 @@ class RewardResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('reward_name')
+                    ->label('Reward Name'),
+                Tables\Columns\TextColumn::make('points_required')
+                    ->label('Points Required'),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Stock'),
             ])
             ->filters([
                 //
+            ])
+            ->headerActions([
+
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -49,13 +76,6 @@ class RewardResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
     }
 
     public static function getPages(): array
