@@ -77,8 +77,7 @@ class User extends Authenticatable
                 $query->where('exp', '=', $this->exp)
                 //incase the users has a same exp
                     ->where('id', '<' , $this->id);
-            })
-            ->count();
+            })->count();
         return $higherRankUsers + 1;
     }
 
