@@ -141,7 +141,7 @@ class TrashRepository implements TrashInterface
 
         $user = Auth::user();
         $trash_category_id = null;
-        $resErr = "itu bukan sampah";
+        $resErr = "itu bukan sampahh";
         if($data['category'] == 'Anorganik'){
             $trash_category_id = 2;
         } else if ($data['category'] == 'Organik'){
