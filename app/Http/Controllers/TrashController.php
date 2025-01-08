@@ -26,7 +26,7 @@ class TrashController extends Controller
     {
         try {
             $validated = $request->validated();
-
+            Log::info($validated);
             $image = $request->file('trash_image');
             if (!$image || !$image->isValid()) {
                 return new ApiResponse(400, [

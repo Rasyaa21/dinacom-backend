@@ -9,6 +9,7 @@ use App\Repositories\Contracts\UserInterface;
 use App\Http\Response\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -27,7 +28,10 @@ class RegisterController extends Controller
             $token = $user->createToken('token')->plainTextToken;
             return new ApiResponse(201, ['user' => new UserResource($user), 'token' => $token]);
         } catch (Exception $e){
+            Log::error('Register error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
             return new ApiResponse(500, [$e->getMessage()], 'server error');
+
         }
     }
 }

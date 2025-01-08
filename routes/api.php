@@ -22,6 +22,7 @@ Route::prefix('/v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::put('/update', [LoginController::class, 'updateProfile']);
+        Route::put('/update-profile', [LoginController::class, 'updateImage']);
         Route::post('/logout', [LoginController::class, 'logout']);
 
         Route::post('/scan-image', [TrashController::class, 'scanImage']);

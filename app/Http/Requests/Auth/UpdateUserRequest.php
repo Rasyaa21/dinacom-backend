@@ -14,7 +14,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => 'sometimes|string|max:255|regex:/^\S*$/',
             'password' => 'sometimes|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/',
-            'profile_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile_image' => 'sometimes|nullable|image|mimes:jpg,jpeg,png|max:2048',
         ];
     }
 

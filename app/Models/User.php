@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -28,7 +29,9 @@ class User extends Authenticatable
         'points',
         'level',
         'rank',
-        'uuid'
+        'uuid',
+        'exp',
+        'leaderboard'
     ];
 
     /**
@@ -69,29 +72,33 @@ class User extends Authenticatable
         }
     }
 
-    public function calculateLeaderboard(){
-        //if
-        $higherRankUsers = User::where('exp' ,'>' ,$this->exp)
-            ->orWhere(function ($query){
-                //else
-                $query->where('exp', '=', $this->exp)
-                //incase the users has a same exp
-                    ->where('id', '<' , $this->id);
-            })->count();
-        return $higherRankUsers + 1;
+    public function calculateLeaderboard()
+    {
+        $users = self::orderBy('exp', 'desc')->get();
+        foreach ($users as $index => $user) {
+            $user->withoutEvents(function () use ($user, $index) {
+                $user->update(['leaderboard' => $index + 1]);
+            });
+        }
     }
 
-    public static function booted(){
-        static::saving(function ($user){
+    public static function booted()
+    {
+        static::creating(function($user) {
+            $user->uuid = Str::uuid()->toString();
+            $user->exp = 1;
+        });
+
+        static::saving(function ($user) {
             $user->rank = $user->calculateRank();
         });
 
-        static::saving(function ($user){
-            $user->leaderboard = $user->calculateLeaderboard();
-        });
-
-        static::creating(function($user){
-            $user->uuid = Str::uuid()->toString();
+        static::updated(function ($user) {
+            if ($user->wasChanged('exp')) {
+                dispatch(function () {
+                    (new self())->calculateLeaderboard();
+                })->afterResponse();
+            }
         });
     }
 }

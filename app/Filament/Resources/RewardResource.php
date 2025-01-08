@@ -32,7 +32,7 @@ class RewardResource extends Resource
                     ->required()
                     ->default(0)
                     ->readOnly(),
-                Forms\Components\RichEditor::make('description')
+                Forms\Components\Textarea::make('description')
                     ->columnSpanFull()
                     ->required(),
                 Forms\Components\Repeater::make('codes')

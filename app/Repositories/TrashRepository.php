@@ -73,55 +73,56 @@ class TrashRepository implements TrashInterface
         }
         return $data;
     }
-
     public function scanImage(string $imagePath)
     {
-        global $parsedResult;
         if (!file_exists($imagePath) || !is_file($imagePath) || !is_readable($imagePath)) {
             throw new InvalidArgumentException("Image file not found or not readable: $imagePath");
         }
-        try {
-            $prompt = '"Anda adalah seorang pemilah sampah profesional. Berdasarkan gambar, identifikasi:
-                Nama jenis sampah.
-                Kategori sampah (Organik, Anorganik, atau Limbah).
-                Dan Ada Berapa Jumlah Sampahnya pada gambar tersebut.
-                Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
-                Harap jawab dalam format berikut:
 
-                Nama Sampah: [nama]
-                Deskripsi : [deskripsi]
-                Kategori: [Organik/Anorganik/Limbah]
-                Pengelolaan : [penjelasan]
-                Jumlah Sampah: [jumlah]
-                "';
+        try {
+            $prompt = "Anda adalah seorang AI yang sangat cerdas dan professional dalam pemilahan sampah. Tujuan utama anda mengidentifikasi, mengkategorikan, dan memberikan panduan terperinci untuk pembuangan dan daur ulang sampah. Berdasarkan gambar, identifikasi:
+                        - Nama jenis sampah.
+                        - Kategori sampah (Organik, Anorganik, atau Limbah).
+                        - Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
+                        - Perkirakan jumlah sampah dalam gambar.
+
+                        Jawab dalam format berikut:
+
+                        **Nama Sampah:** [nama]
+                        **Deskripsi:** [deskripsi] (deskripsikan sampahnya saja) jika bukan sampah jelaskan itu bukan sampah
+                        **Kategori:** [Organik/Anorganik/Limbah] jika sampahnya tidak ada kategorikan sebagai Undefined
+                        **Pengelolaan:** [penjelasan] jika itu bukan sampah jelaskan itu bukan sampah
+                        **Jumlah Sampah:** [jumlah] (dalam bentuk satuan angka saja tanpa deskripsi) jika itu bukan sampah maka buatlah menjadi 0";
 
             $result = Gemini::geminiFlash()
-            ->generateContent([
-            $prompt,
-            new Blob(
-                mimeType: MimeType::IMAGE_JPEG,
-                data: base64_encode(file_get_contents($imagePath))
-            )
-            ]);
+                ->generateContent([
+                    $prompt,
+                    new Blob(
+                        mimeType: MimeType::IMAGE_JPEG,
+                        data: base64_encode(file_get_contents($imagePath))
+                    )
+                ]);
 
             $output = $result->text();
 
-            preg_match('/Nama Sampah: (.+)/', $output, $namaSampah);
-            preg_match('/Deskripsi : (.+)/', $output, $deskripsi);
-            preg_match('/Kategori: (.+)/', $output, $kategori);
-            preg_match('/Pengelolaan : (.+)/s', $output, $pengelolaan);
-            preg_match('/Jumlah Sampah: (\d+)/', $output, $jumlahSampah);
+            preg_match('/\*\*Nama Sampah:\*\*\s*(.+?)(?=\n\*\*|$)/s', $output, $namaSampah);
+            preg_match('/\*\*Deskripsi:\*\*\s*(.+?)(?=\n\*\*|$)/s', $output, $deskripsi);
+            preg_match('/\*\*Kategori:\*\*\s*(.+?)(?=\n\*\*|$)/s', $output, $kategori);
+            preg_match('/\*\*Pengelolaan:\*\*\s*(.+?)(?=\n\*\*|$)/s', $output, $pengelolaan);
+            preg_match('/\*\*Jumlah Sampah:\*\*\s*(\d+)/', $output, $jumlahSampah);
 
             $parsedResult = [
-            'trash_image' => $imagePath,
-            'trash_name' => $namaSampah[1] ?? null,
-            'description' => $deskripsi[1] ?? null,
-            'category' => $kategori[1] ?? null,
-            'pengelolaan' => $pengelolaan[1] ?? null,
-            'trash_quantity' => $jumlahSampah[1] ?? null,
+                'trash_image' => $imagePath,
+                'trash_name' => isset($namaSampah[1]) ? trim($namaSampah[1]) : 'Data tidak tersedia',
+                'description' => isset($deskripsi[1]) ? trim($deskripsi[1]) : 'Data tidak tersedia',
+                'category' => isset($kategori[1]) ? trim($kategori[1]) : 'Data tidak tersedia',
+                'pengelolaan' => isset($pengelolaan[1]) ? trim($pengelolaan[1]) : 'Data tidak tersedia',
+                'trash_quantity' => isset($jumlahSampah[1]) ? (int) $jumlahSampah[1] : 0
             ];
 
-                return $parsedResult;
+            Log::info('Parsed Trash Data:', $parsedResult);
+
+            return $parsedResult;
 
         } catch (Exception $e) {
             Log::error('Gemini API Error', [
@@ -133,16 +134,23 @@ class TrashRepository implements TrashInterface
         }
     }
 
+
+
+
     public function storeData(array $data){
 
         $user = Auth::user();
         $trash_category_id = null;
+        $resErr = "itu bukan sampah";
         if($data['category'] == 'Anorganik'){
             $trash_category_id = 2;
         } else if ($data['category'] == 'Organik'){
             $trash_category_id = 1;
         } else {
             $trash_category_id = 3;
+        }
+        if($data['category'] == 'Undefined'){
+            return $resErr;
         }
         $trashData = Trash::create([
             'trash_image' => $data['trash_image'],

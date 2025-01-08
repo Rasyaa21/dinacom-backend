@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Response\ApiResponse;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -51,14 +52,19 @@ class LoginController extends Controller
         }
     }
 
-    public function updateProfile(UpdateUserRequest $req)
+    public function updateProfile(Request $req)
     {
         try {
-            $data = $req->validated();
+            Log::info($req->all());
             $user = Auth::user();
-            Log::info('Authenticated User:', ['user' => $user]);
             if (!$user) {
                 return new ApiResponse(401, [], 'User not authenticated');
+            }
+            $data = $req->except('profile_image');
+            $path = null;
+            if ($req->hasFile('profile_image')) {
+                $path = $req->file('profile_image')->store('profile_images', 'public');
+                $data['profile_image'] = $path;
             }
             $this->userRepository->update($user->id, $data);
             return new ApiResponse(201, ['message' => 'Profile updated successfully']);
@@ -67,6 +73,19 @@ class LoginController extends Controller
         }
     }
 
+    public function updateImage(Request $req){
+        try{
+            $user = Auth::user();
+            $image = $req->file('trash_image');
+            if(!$image){
+                Log::info('image gaada');
+            }
+            Log::info($image);
+            // $this->userRepository->updateImage($user->id, $req->);
+                } catch (Exception $e) {
+            return new ApiResponse(500, [$e->getMessage()], 'Error while updating profile');
+        }
+    }
 
     public function logout(Request $req){
         try{
