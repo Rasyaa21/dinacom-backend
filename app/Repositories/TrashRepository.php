@@ -29,50 +29,54 @@ class TrashRepository implements TrashInterface
 
     public function getGroupDataByUserId(string $type)
     {
-        $user_id = Auth::user()->id;
         if (!in_array($type, ['month', 'week', 'day'])) {
-            throw new InvalidArgumentException("Wrong Input Type");
+            throw new \InvalidArgumentException("Invalid input type. Allowed types: 'month', 'week', 'day'.");
         }
-        $query = Trash::query()->where('user_id', $user_id);
-        if ($type == 'month') {
+
+        $userId = Auth::user()->id;
+
+        $query = Trash::query()
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc'); // Sort by created_at descending
+
+        if ($type === 'month') {
+            // Group by month
             $groupData = $query->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as period, COUNT(*) as count')
                 ->groupBy('period')
+                ->having('count', '>', 1)
                 ->get();
-            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
-                foreach($groupData as $group){
-                    if ($group->count > 1){
-                        $subQuery->orWhere(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'), $group->period);
-                    }
-                }
-            })->get();
-        } elseif ($type == 'week') {
-            $groupData = $query->selectRaw('YEAR(created_at) as year, WEEK(created_at) as week, COUNT(*) as count')
-                ->groupBy('year', 'week')
+
+            return Trash::where('user_id', $userId)
+                ->whereIn(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'), $groupData->pluck('period'))
+                ->orderBy('created_at', 'desc')
                 ->get();
-            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
-                foreach($groupData as $group){
-                    if ($group->count > 1){
-                        $subQuery->orWhere(function ($q) use ($group){
-                            $q->whereYear('created_at', $group->year)
-                            ->where(DB::raw('WEEK(created_at)'), $group->week);
-                        });
-                    }
-                }
-            })->get();
-        } else {
-            $groupData = $query->selectRaw('DATE(created_at) as period, COUNT(*) as count')
+        } elseif ($type === 'week') {
+            // Group by ISO week
+            $groupData = $query->selectRaw('YEARWEEK(created_at, 1) as period, COUNT(*) as count')
                 ->groupBy('period')
+                ->having('count', '>', 1)
                 ->get();
-            $data = Trash::where('user_id', $user_id)->where(function ($subQuery) use ($groupData){
-                foreach($groupData as $group){
-                    if($group->count > 1){
-                        $subQuery->orWhere(DB::raw('DATE(created_at)'), $group->period);
+
+            return Trash::where('user_id', $userId)
+                ->where(function ($subQuery) use ($groupData) {
+                    foreach ($groupData as $group) {
+                        $subQuery->orWhereRaw('YEARWEEK(created_at, 1) = ?', [$group->period]);
                     }
-                }
-            })->get();
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else { // type === 'day'
+            // Group by day
+            $today = now()->toDateString();
+            return Trash::where('user_id', $userId)
+                ->whereDate('created_at', $today)
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
-        return $data;
     }
+
+
+
     public function scanImage(string $imagePath)
     {
         if (!file_exists($imagePath) || !is_file($imagePath) || !is_readable($imagePath)) {
