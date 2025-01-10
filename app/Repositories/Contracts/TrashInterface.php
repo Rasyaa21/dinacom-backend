@@ -11,4 +11,5 @@ interface TrashInterface
     public function getDataByUserAndCategory($category_id);
     public function getAllDataByUserId();
     public function getGroupDataByUserId(string $type);
+    public function checkIfDuplicatedImage(string $imagePath);
 }

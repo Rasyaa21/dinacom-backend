@@ -15,6 +15,8 @@ use RuntimeException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use function PHPUnit\Framework\isReadable;
+
 class TrashRepository implements TrashInterface
 {
     public function getDataByUserAndCategory($category_id){
@@ -87,15 +89,15 @@ class TrashRepository implements TrashInterface
             $prompt = "Anda adalah seorang AI yang sangat cerdas dan professional dalam pemilahan sampah. Tujuan utama anda mengidentifikasi, mengkategorikan, dan memberikan panduan terperinci untuk pembuangan dan daur ulang sampah. Berdasarkan gambar, identifikasi:
                         - Nama jenis sampah.
                         - Kategori sampah (Organik, Anorganik, atau Limbah).
-                        - Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai.
+                        - Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai dengan format langkah - langkah (1,2,3).
                         - Perkirakan jumlah sampah dalam gambar.
 
                         Jawab dalam format berikut:
 
                         **Nama Sampah:** [nama]
-                        **Deskripsi:** [deskripsi] (deskripsikan sampahnya saja) jika bukan sampah jelaskan itu bukan sampah
+                        **Deskripsi:** [deskripsi] (deskripsikan sampahnya dan jelaskan apa sampah itu) jika bukan sampah jelaskan itu bukan sampah lalu berikan nama barang itu dan fungsi nya
                         **Kategori:** [Organik/Anorganik/Limbah] jika sampahnya tidak ada kategorikan sebagai Undefined
-                        **Pengelolaan:** [penjelasan] jika itu bukan sampah jelaskan itu bukan sampah
+                        **Pengelolaan:** [penjelasan] jika itu bukan sampah jelaskan itu bukan sampah, buat agar lebih panjang dan detail dengan bahasa yang tidak sulit untuk dipahami orang tetapi masih formal
                         **Jumlah Sampah:** [jumlah] (dalam bentuk satuan angka saja tanpa deskripsi) jika itu bukan sampah maka buatlah menjadi 0";
 
             $result = Gemini::geminiFlash()
@@ -193,5 +195,13 @@ class TrashRepository implements TrashInterface
     public function DetailTrash($id){
         $user = Auth::user();
         return Trash::where('id', $id)->where('user_id', $user->id)->first();
+    }
+
+    public function checkIfDuplicatedImage(string $imagePath){
+        $user = Auth::user()->id;
+        //
+        if (!file_exists($imagePath) || !is_file($imagePath) || !is_readable($imagePath)){
+            throw new Exception('Image not found');
+        }
     }
 }
