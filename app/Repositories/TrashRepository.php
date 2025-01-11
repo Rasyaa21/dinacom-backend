@@ -9,7 +9,9 @@ use GeminiAPI\Laravel\Facades\Gemini;
 use Exception;
 use App\Models\Trash;
 use App\Models\User;
+use App\Models\UserAchievement;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 use RuntimeException;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +42,7 @@ class TrashRepository implements TrashInterface
 
         $query = Trash::query()
             ->where('user_id', $userId)
-            ->orderBy('created_at', 'desc'); // Sort by created_at descending
+            ->orderBy('created_at', 'desc');
 
         if ($type === 'month') {
             $groupData = $query->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as period, COUNT(*) as count')
@@ -53,7 +55,6 @@ class TrashRepository implements TrashInterface
                 ->orderBy('created_at', 'desc')
                 ->get();
         } elseif ($type === 'week') {
-            // Group by ISO week
             $groupData = $query->selectRaw('YEARWEEK(created_at, 1) as period, COUNT(*) as count')
                 ->groupBy('period')
                 ->having('count', '>', 1)
@@ -67,8 +68,7 @@ class TrashRepository implements TrashInterface
                 })
                 ->orderBy('created_at', 'desc')
                 ->get();
-        } else { // type === 'day'
-            // Group by day
+        } else {
             $today = now()->toDateString();
             return Trash::where('user_id', $userId)
                 ->whereDate('created_at', $today)
@@ -101,12 +101,13 @@ class TrashRepository implements TrashInterface
                         - Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai dengan format langkah - langkah (1,2,3).
                         - Perkirakan jumlah sampah dalam gambar.
 
+
                         Jawab dalam format berikut:
 
                         **Nama Sampah:** [nama]
                         **Deskripsi:** [deskripsi] (deskripsikan sampahnya dan jelaskan apa sampah itu) jika bukan sampah jelaskan itu bukan sampah lalu berikan nama barang itu dan fungsi nya
                         **Kategori:** [Organik/Anorganik/Limbah] jika sampahnya tidak ada kategorikan sebagai Undefined
-                        **Pengelolaan:** [penjelasan] jika itu bukan sampah jelaskan itu bukan sampah, buat agar lebih panjang dan detail dengan bahasa yang tidak sulit untuk dipahami orang tetapi masih formal
+                        **Pengelolaan:** [penjelasan] jika itu bukan sampah jelaskan itu bukan sampah, buat agar lebih panjang dan detail dengan bahasa yang tidak sulit untuk dipahami orang tetapi masih formal jadikan sebagai list tanpa tanda bintang
                         **Jumlah Sampah:** [jumlah] (dalam bentuk satuan angka saja tanpa deskripsi) jika itu bukan sampah maka buatlah menjadi 0";
 
             $result = Gemini::geminiFlash()
@@ -137,6 +138,8 @@ class TrashRepository implements TrashInterface
                 'pengelolaan' => isset($pengelolaan[1]) ? trim($pengelolaan[1]) : 'Data tidak tersedia',
                 'trash_quantity' => isset($jumlahSampah[1]) ? (int) $jumlahSampah[1] : 0
             ];
+
+
 
             Log::info('Parsed Trash Data:', $parsedResult);
 
@@ -175,6 +178,8 @@ class TrashRepository implements TrashInterface
 
         $imagePath = 'trash_images/' . basename($data['trash_image']);
 
+        UserAchievement::where('user_id', $user->id)->increment('progress', 1);
+
         $trashData = Trash::create([
             'trash_image' => $imagePath,
             'trash_name' => $data['trash_name'],
@@ -199,6 +204,8 @@ class TrashRepository implements TrashInterface
         $user->exp += $exp * $multiplier;
         $user->points += $points * $multiplier;
         $user->save();
+
+        Artisan::call('update:claimable');
 
         return $trashData;
     }

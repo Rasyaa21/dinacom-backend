@@ -23,19 +23,40 @@ class TrashLocationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('latitude')
+                Forms\Components\TextInput::make('location_name')
+                    ->label('Location Name')
+                    ->required(),
+                Forms\Components\TextInput::make('description')
+                    ->label('Description')
+                    ->required(),
+                Forms\Components\Textarea::make('address')
+                    ->label('Address')
+                    ->columnSpanFull()
+                    ->required(),
+                    Forms\Components\FileUpload::make('location_image')
+                    ->label('Location Image')
+                    ->columnSpanFull()
+                    ->directory('location_images')
+                    ->image()
+                    ->disk('public')
+                    ->maxSize(2048)
+                    ->preserveFilenames()
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif']),
+                    Forms\Components\TextInput::make('latitude')
                     ->label('Latitude')
                     ->numeric()
-                    ->step(0.000001)
-                    ->required(),
+                    ->step(0.000000000000001)
+                    ->required()
+                    ->rules(['numeric', 'between:-90,90']), // Latitude must be between -90 and 90
                 Forms\Components\TextInput::make('longitude')
                     ->label('Longitude')
                     ->numeric()
-                    ->step(0.000001)
-                    ->required(),
+                    ->step(0.000000000000001)
+                    ->required()
+                    ->rules(['numeric', 'between:-180,180']),
                 Forms\Components\Select::make('trash_category_id')
                     ->relationship('category', 'name')
-                    ->required()
+                    ->required(),
             ]);
     }
 

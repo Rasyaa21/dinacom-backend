@@ -10,6 +10,11 @@ class TrashLocationResResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
+            'location_name' => $this->location_name,
+            'description' => $this->description,
+            'address' => $this->address,
+            'location_image' => $this->location_image,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'trash_category_id' => $this->trash_category_id,

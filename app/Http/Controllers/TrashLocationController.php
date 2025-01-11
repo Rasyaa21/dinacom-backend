@@ -37,4 +37,13 @@ class TrashLocationController extends Controller
             return new ApiResponse(500, [$e->getMessage()], 'server error');
         }
     }
+
+    public function getLocationById($id){
+        try{
+            $location = $this->trashLocationRepository->getLocationById($id);
+            return new ApiResponse(200, new TrashLocationResResource($location), 'lokasi berhasil didapatkan');
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
 }

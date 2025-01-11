@@ -17,4 +17,5 @@ class RewardCode extends Model
         return $this->belongsTo(Reward::class);
     }
 
+    protected $proxies = '*';
 }

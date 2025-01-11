@@ -26,7 +26,6 @@ class RewardResource extends Resource
                 Forms\Components\TextInput::make('points_required')
                     ->required(),
                 Forms\Components\FileUpload::make('reward_image')
-                    ->required()
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('stock')
                     ->required()

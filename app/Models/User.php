@@ -8,19 +8,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
+use Filament\Panel;
 use App\Repositories\UserRepository;
+use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Facades\Log;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -34,21 +30,11 @@ class User extends Authenticatable
         'leaderboard'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -56,6 +42,16 @@ class User extends Authenticatable
             'password' => 'hashed',
             'uuid' => 'string'
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
+
+    public function userAchievements()
+    {
+        return $this->hasMany(UserAchievement::class);
     }
 
     public function calculateRank(){
@@ -82,11 +78,29 @@ class User extends Authenticatable
         }
     }
 
+    public function generateAchievement()
+    {
+        $achievements = Achievement::all();
+        foreach ($achievements as $achievement){
+            $this->userAchievements()->create([
+                'achievement_id' => $achievement->id,
+                'user_id' => $this->id,
+                'status' => 'in_progress',
+                'progress' => 0,
+            ]);
+        }
+    }
+
     public static function booted()
     {
         static::creating(function($user) {
             $user->uuid = Str::uuid()->toString();
             $user->exp = 1;
+
+        });
+
+        static::created(function($user){
+            $user->generateAchievement();
         });
 
         static::saving(function ($user) {
@@ -100,5 +114,11 @@ class User extends Authenticatable
                 })->afterResponse();
             }
         });
+    }
+
+    public function updatePoints($points)
+    {
+        $this->points += $points;
+        $this->save();
     }
 }

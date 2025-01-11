@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\TrashLocationController;
+use App\Http\Controllers\UserAchievementController;
 use Google\Cloud\Storage\StorageClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -35,10 +37,15 @@ Route::prefix('/v1')->group(function () {
 
         Route::get('/get-all-locations', [TrashLocationController::class, 'getAllLocation']);
         Route::get('/get-all-locations/{category_id}', [TrashLocationController::class, 'getLocationByCategory']);
+        Route::get('/location/{$id}', [TrashLocationController::class, 'getLocationById']);
 
         Route::get('/get-all-vouchers', [RewardController::class, 'getAllAvailVoucher']);
         Route::post('/voucher-redeem/{id}', [RewardController::class, 'redeemCode']);
         Route::get('/voucher/{id}', [RewardController::class, 'rewardDetail']);
+
+        Route::get('/achievements', [UserAchievementController::class, 'index']);
+        Route::get('/achievements/{id}', [UserAchievementController::class, 'show']);
+        Route::post('/achievements/claim/{id}', [UserAchievementController::class, 'claim']);
     });
 });
 

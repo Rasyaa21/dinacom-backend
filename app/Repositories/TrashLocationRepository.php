@@ -19,4 +19,8 @@ class TrashLocationRepository implements TrashLocationInterface
     public function getLocationByCategory($id){
         return TrashLocation::where('trash_category_id', $id)->get();
     }
+
+    public function getLocationById($id){
+        return TrashLocation::where('id', $id)->get();
+    }
 }

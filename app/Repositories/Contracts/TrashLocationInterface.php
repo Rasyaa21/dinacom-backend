@@ -7,4 +7,5 @@ interface TrashLocationInterface
     public function all();
     public function find($id);
     public function getLocationByCategory($id);
+    public function getLocationById($id);
 }
