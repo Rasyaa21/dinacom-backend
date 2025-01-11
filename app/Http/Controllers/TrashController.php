@@ -26,9 +26,11 @@ class TrashController extends Controller
     {
         try {
             $validated = $request->validated();
-            Log::info($validated);
+            Log::info('Validated request data:', $validated);
+
             $image = $request->file('trash_image');
             if (!$image || !$image->isValid()) {
+                Log::error('Invalid or missing image file');
                 return new ApiResponse(400, [
                     'error' => 'Invalid or missing image file',
                     'help' => 'Please provide a valid image file in the trash_image field'
@@ -42,26 +44,23 @@ class TrashController extends Controller
             }
 
             $fullPath = public_path('storage/' . $imagePath);
+            Log::info("Image stored at: " . $fullPath);
 
-            $result = $this->trashRepository->scanImage($fullPath);
+            if (!file_exists($fullPath)) {
+                throw new RuntimeException("Image file not found at: " . $fullPath);
+            }
 
-            @unlink($fullPath);
-            $storeData = $this->trashRepository->storeData($result);
+            $scanResult = $this->trashRepository->scanImage($fullPath);
 
-            return new ApiResponse(201, $result, 'data berhasil di tambahkan');
+            $storeResult = $this->trashRepository->storeData($scanResult);
 
+            return new ApiResponse(200, $scanResult, "Image scanned and data stored successfully");
         } catch (Exception $e) {
-            Log::error('Image Classification Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::error('Error occurred:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return new ApiResponse(500, [
+                'error' => 'An error occurred while processing the image',
+                'message' => $e->getMessage()
             ]);
-
-            $statusCode = $e instanceof InvalidArgumentException ? 400 : 500;
-
-            return new ApiResponse($statusCode, [
-                'error' => $e->getMessage(),
-                'help' => 'Ensure you are using form-data with a valid image file in the trash_image field'
-            ], 'Error processing image');
         }
     }
 

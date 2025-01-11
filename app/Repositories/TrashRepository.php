@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use RuntimeException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 use function PHPUnit\Framework\isReadable;
 
@@ -42,7 +43,6 @@ class TrashRepository implements TrashInterface
             ->orderBy('created_at', 'desc'); // Sort by created_at descending
 
         if ($type === 'month') {
-            // Group by month
             $groupData = $query->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as period, COUNT(*) as count')
                 ->groupBy('period')
                 ->having('count', '>', 1)
@@ -85,6 +85,15 @@ class TrashRepository implements TrashInterface
             throw new InvalidArgumentException("Image file not found or not readable: $imagePath");
         }
 
+        Log::info("image path before put cache ". $imagePath);
+        Cache::put('image_path', $imagePath, now()->addMinutes(5));
+        $prevImage = Cache::get("image_path");
+        Log::info("image path after put cache ". $prevImage);
+
+        if (!file_exists($prevImage) || !is_file($prevImage) || !is_readable($prevImage)) {
+            throw new InvalidArgumentException("Image file not found or not readable: $prevImage");
+        }
+
         try {
             $prompt = "Anda adalah seorang AI yang sangat cerdas dan professional dalam pemilahan sampah. Tujuan utama anda mengidentifikasi, mengkategorikan, dan memberikan panduan terperinci untuk pembuangan dan daur ulang sampah. Berdasarkan gambar, identifikasi:
                         - Nama jenis sampah.
@@ -117,6 +126,9 @@ class TrashRepository implements TrashInterface
             preg_match('/\*\*Pengelolaan:\*\*\s*(.+?)(?=\n\*\*|$)/s', $output, $pengelolaan);
             preg_match('/\*\*Jumlah Sampah:\*\*\s*(\d+)/', $output, $jumlahSampah);
 
+            Log::info('img pathhhh'. $imagePath);
+
+
             $parsedResult = [
                 'trash_image' => $imagePath,
                 'trash_name' => isset($namaSampah[1]) ? trim($namaSampah[1]) : 'Data tidak tersedia',
@@ -143,23 +155,28 @@ class TrashRepository implements TrashInterface
 
 
 
-    public function storeData(array $data){
-
+    public function storeData(array $data)
+    {
         $user = Auth::user();
         $trash_category_id = null;
-        $resErr = "itu bukan sampahh";
-        if($data['category'] == 'Anorganik'){
+        $resErr = "itu bukan sampah";
+
+        if ($data['category'] == 'Anorganik') {
             $trash_category_id = 2;
-        } else if ($data['category'] == 'Organik'){
+        } else if ($data['category'] == 'Organik') {
             $trash_category_id = 1;
         } else {
             $trash_category_id = 3;
         }
-        if($data['category'] == 'Undefined'){
+
+        if ($data['category'] == 'Undefined') {
             return $resErr;
         }
+
+        $imagePath = 'trash_images/' . basename($data['trash_image']);
+
         $trashData = Trash::create([
-            'trash_image' => $data['trash_image'],
+            'trash_image' => $imagePath,
             'trash_name' => $data['trash_name'],
             'description' => $data['description'],
             'user_id' => $user->id,
@@ -171,7 +188,6 @@ class TrashRepository implements TrashInterface
         $exp = 25 * $quantity;
         $user = User::find($user->id);
         $rank = $user->rank;
-
         $rankMultiplier = [
             'Bronze' => 1,
             'Silver' => 1.2,
@@ -179,7 +195,6 @@ class TrashRepository implements TrashInterface
             'Platinum' => 1.5,
             'Diamond' => 1.7
         ];
-
         $multiplier = isset($rankMultiplier[$rank]) ? $rankMultiplier[$rank] : 1;
         $user->exp += $exp * $multiplier;
         $user->points += $points * $multiplier;
