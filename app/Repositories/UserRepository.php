@@ -57,4 +57,9 @@ class UserRepository implements UserInterface
     {
         return User::find($id)->delete();
     }
+
+    public function getUserByName(){
+        $UserId = Auth::user()->id;
+        return User::find($UserId);
+    }
 }

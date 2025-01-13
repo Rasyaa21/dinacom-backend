@@ -40,7 +40,7 @@ class UserAchievementController extends Controller
         public function claim($id){
             try{
                 $achievement = $this->AchievementRepository->claimAchivement($id);
-                return new ApiResponse(200, $achievement, 'success');
+                return new ApiResponse(200, new UserAchievementResource($achievement), 'success');
             } catch (Exception $e){
                 return new ApiResponse(500, [$e->getMessage()], 'server error');
             }

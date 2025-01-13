@@ -96,7 +96,7 @@ class TrashRepository implements TrashInterface
 
         try {
             $prompt = "Anda adalah seorang AI yang sangat cerdas dan professional dalam pemilahan sampah. Tujuan utama anda mengidentifikasi, mengkategorikan, dan memberikan panduan terperinci untuk pembuangan dan daur ulang sampah. Berdasarkan gambar, identifikasi:
-                        - Nama jenis sampah.
+                        - Nama jenis sampah (definisikan nama sampah secara general jangan terlalu detail dan jika ada 2 jenis sampah berikan saja nama sampah yang paling keliatan di gambar)
                         - Kategori sampah (Organik, Anorganik, atau Limbah).
                         - Jika termasuk Limbah, klasifikasikan lebih lanjut (contoh: B3, medis) dan jelaskan metode pengelolaan yang sesuai dengan format langkah - langkah (1,2,3).
                         - Perkirakan jumlah sampah dalam gambar.

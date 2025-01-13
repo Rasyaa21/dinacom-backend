@@ -2,16 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 use Filament\Panel;
-use App\Repositories\UserRepository;
 use Filament\Models\Contracts\FilamentUser;
-use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -54,6 +51,10 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(UserAchievement::class);
     }
 
+    public function userChallenges(){
+        return $this->hasMany(UserChallenge::class);
+    }
+
     public function calculateRank(){
         if($this->exp < 5000){
             return 'Bronze';
@@ -91,12 +92,23 @@ class User extends Authenticatable implements FilamentUser
         }
     }
 
+    public function generateChallenge(){
+        $challenges = Challenge::inRandomOrder()->take(3)->get();
+        foreach ($challenges as $challenge){
+            $this->userChallenges()->create([
+                'challenge_id' => $challenge->id,
+                'user_id' => $this->id,
+                'status' => 'in_progress',
+                'progress' => 0
+            ]);
+        }
+    }
+
     public static function booted()
     {
         static::creating(function($user) {
             $user->uuid = Str::uuid()->toString();
             $user->exp = 1;
-
         });
 
         static::created(function($user){

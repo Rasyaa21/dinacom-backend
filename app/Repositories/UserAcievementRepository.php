@@ -45,6 +45,7 @@ class UserAcievementRepository implements UserAcievementInterface
         }
 
         $userAchievement->claimed_at = now();
+        $userAchievement->status = 'claimed';
         $userAchievement->claimable = false;
 
         try {

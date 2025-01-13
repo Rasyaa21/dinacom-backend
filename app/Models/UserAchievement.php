@@ -39,6 +39,10 @@ class UserAchievement extends Model
         static::saving(function ($achievement) {
             $achievement->claimable = $achievement->progress >= $achievement->achievement->required_points
                 && !$achievement->claimed_at;
+
+            if($achievement->claimable){
+                $achievement->status = 'completed';
+            }
         });
     }
 }

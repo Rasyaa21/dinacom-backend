@@ -97,4 +97,13 @@ class LoginController extends Controller
             return new ApiResponse(500, [$e->getMessage()], 'Error logging out: ' . $e->getMessage());
         }
     }
+
+    public function getUserByName(){
+        try{
+            $user = $this->userRepository->getUserByName();
+            return new ApiResponse(200, ["data" => new UserResource($user)], 'success retreive user data.');
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'Error logging out: ' . $e->getMessage());
+        }
+    }
 }
