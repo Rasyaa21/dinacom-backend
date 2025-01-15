@@ -35,7 +35,7 @@ git clone https://github.com/Rasyaa21/dinacom-backend.git
 <h3>Config .env variables</h2>
 
 Use the `.env.example` as reference to create your configuration file `.env` with your Gemini API key that you can obtain it in 
-- [Google AI Studio] (https://aistudio.google.com/prompts/new_chat)
+- [Google AI Studio](https://aistudio.google.com/prompts/new_chat)
 
 ```.env
 GEMINI_API_KEY={YOUR GEMINI API KEY}
