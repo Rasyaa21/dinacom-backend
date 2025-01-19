@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\RewardHistoryResource;
 use App\Http\Resources\RewardResResource;
 use App\Http\Response\ApiResponse;
 use App\Repositories\Contracts\RewardInterface;
@@ -39,6 +40,24 @@ class RewardController extends Controller
         try {
             $code = $this->rewardRepository->rewardDetail($id);
             return new ApiResponse(200, new RewardResResource($code), 'data voucher berhasil didapatkan');
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
+
+    public function RewardHistories(){
+        try{
+            $histories = $this->rewardRepository->getAllRewardByUserId();
+            return new ApiResponse(200, RewardHistoryResource::collection($histories), 'berhasil mendapatkan data history');
+        } catch (Exception $e){
+            return new ApiResponse(500, [$e->getMessage()], 'server error');
+        }
+    }
+
+    public function DetailRewardHistories($id){
+        try{
+            $history = $this->rewardRepository->getRewardDetail($id);
+            return new ApiResponse(200, new RewardHistoryResource($history), 'berhasil mendapatkan data history');
         } catch (Exception $e){
             return new ApiResponse(500, [$e->getMessage()], 'server error');
         }

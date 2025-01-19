@@ -22,45 +22,34 @@ class TrashController extends Controller
         $this->trashRepository = $trashRepository;
     }
 
+
     public function scanImage(ScanImageRequest $request)
-    {
-        try {
-            $validated = $request->validated();
-            Log::info('Validated request data:', $validated);
-
-            $image = $request->file('trash_image');
-            if (!$image || !$image->isValid()) {
-                Log::error('Invalid or missing image file');
-                return new ApiResponse(400, [
-                    'error' => 'Invalid or missing image file',
-                    'help' => 'Please provide a valid image file in the trash_image field'
+        {
+            try {
+                $image = $request->file('trash_image');
+                if (!$image || !$image->isValid()) {
+                    return new ApiResponse(400, [
+                        'error' => 'Invalid or missing image file',
+                        'help' => 'Please provide a valid image file in the trash_image field'
+                    ]);
+                }
+                $storagePath = 'trash_images';
+                $imagePath = $image->store($storagePath, 'public');
+                if (!$imagePath) {
+                    throw new RuntimeException("Failed to store the image file");
+                }
+                $fullPath = public_path('storage/' . $imagePath);
+                if (!file_exists($fullPath)) {
+                    throw new RuntimeException("Image file not found at: " . $fullPath);
+                }
+                $scanResult = $this->trashRepository->scanImage($fullPath);
+                return new ApiResponse(200, $scanResult, "Image processed successfully.");
+            } catch (Exception $e) {
+                Log::error('Error occurred:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+                return new ApiResponse(500, [
+                    'error' => 'An error occurred while processing the image',
+                    'message' => $e->getMessage()
                 ]);
-            }
-
-            $storagePath = 'trash_images';
-            $imagePath = $image->store($storagePath, 'public');
-            if (!$imagePath) {
-                throw new RuntimeException("Failed to store the image file");
-            }
-
-            $fullPath = public_path('storage/' . $imagePath);
-            Log::info("Image stored at: " . $fullPath);
-
-            if (!file_exists($fullPath)) {
-                throw new RuntimeException("Image file not found at: " . $fullPath);
-            }
-
-            $scanResult = $this->trashRepository->scanImage($fullPath);
-
-            $storeResult = $this->trashRepository->storeData($scanResult);
-
-            return new ApiResponse(200, $scanResult, "Image scanned and data stored successfully");
-        } catch (Exception $e) {
-            Log::error('Error occurred:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return new ApiResponse(500, [
-                'error' => 'An error occurred while processing the image',
-                'message' => $e->getMessage()
-            ]);
         }
     }
 

@@ -22,4 +22,8 @@ class Reward extends Model
     public function codes(){
         return $this->hasMany(RewardCode::class);
     }
+
+    public function rewardHistories(){
+        return $this->hasMany(RewardHistory::class);
+    }
 }

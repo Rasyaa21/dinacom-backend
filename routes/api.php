@@ -44,6 +44,8 @@ Route::prefix('/v1')->group(function () {
         Route::get('/get-all-vouchers', [RewardController::class, 'getAllAvailVoucher']);
         Route::post('/voucher-redeem/{id}', [RewardController::class, 'redeemCode']);
         Route::get('/voucher/{id}', [RewardController::class, 'rewardDetail']);
+        Route::get('/voucher-histories', [RewardController::class, 'RewardHistories']);
+        Route::get('/voucher-histories/{id}', [RewardController::class, 'DetailRewardHistories']);
 
         Route::get('/achievements', [UserAchievementController::class, 'index']);
         Route::get('/achievements/{id}', [UserAchievementController::class, 'show']);

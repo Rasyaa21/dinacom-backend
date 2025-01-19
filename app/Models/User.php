@@ -104,6 +104,11 @@ class User extends Authenticatable implements FilamentUser
         }
     }
 
+    public function rewardHistories(){
+        return $this->hasMany(RewardHistory::class);
+    }
+
+
     public static function booted()
     {
         static::creating(function($user) {
