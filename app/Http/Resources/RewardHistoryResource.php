@@ -18,6 +18,8 @@ class RewardHistoryResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'reward_id' => $this->reward_id,
+            'reward_name' => $this->reward->reward_name,
+            'reward_desc' => $this->reward->description,
             'code' => $this->code,
             'redeem_at' => $this->redeem_at
         ];
